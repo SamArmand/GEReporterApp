@@ -49,7 +49,7 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    self.clientTable.register(UITableViewCell.self, forCellReuseIdentifier: "tableViewCell")
+//    self.clientTable.register(UITableViewCell.self, forCellReuseIdentifier: "tableViewCell")
 
     configureDatabase()
     configureStorage()
@@ -59,14 +59,28 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
     logViewLoaded()
   }
 
-  deinit {
-  }
+    deinit {
+        self.ref.child("messages").removeObserver(withHandle: _refHandle)
+    }
+    
+    
+    func configureDatabase() {
+        ref = FIRDatabase.database().reference()
+        // Listen for new messages in the Firebase database
+        _refHandle = self.ref.child("messages").observe(.childAdded, with: { [weak self] (snapshot) -> Void in
+            guard let strongSelf = self else { return }
+            strongSelf.messages.append(snapshot)
+            strongSelf.clientTable.insertRows(at: [IndexPath(row: strongSelf.messages.count-1, section: 0)], with: .automatic)
+        })
+    }
+    
+    
 
-  func configureDatabase() {
-  }
 
-  func configureStorage() {
-  }
+    func configureStorage() {
+        let storageUrl = FIRApp.defaultApp()?.options.storageBucket
+        storageRef = FIRStorage.storage().reference(forURL: "gs://" + storageUrl!)
+    }
 
   func configureRemoteConfig() {
   }
@@ -104,12 +118,56 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
     return messages.count
   }
 
-  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    // Dequeue cell
-    let cell = self.clientTable.dequeueReusableCell(withIdentifier: "tableViewCell", for: indexPath)
-
-    return cell
-  }
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        // Dequeue cell
+        let cell = self.clientTable .dequeueReusableCell(withIdentifier: "tableViewCell", for: indexPath)
+        // Unpack message from Firebase DataSnapshot
+        let messageSnapshot: FIRDataSnapshot! = self.messages[indexPath.row]
+        let message = messageSnapshot.value as! Dictionary<String, String>
+        let name = message[Constants.MessageFields.name] as String!
+        let text = message[Constants.MessageFields.text] as String!
+        cell.textLabel?.text = name! + ": " + text!
+        
+        if name == "Greg Pass" {
+            
+            cell.imageView?.image = UIImage(named: "greg")
+            
+        }
+        
+        else if name == "J McLoughlin" {
+            
+            cell.imageView?.image = UIImage(named: "j")
+            
+        }
+        
+        else if name == "Leland Rechis" {
+            
+            cell.imageView?.image = UIImage(named: "leland")
+            
+        }
+        
+        else if name == "Sonia Sen" {
+            
+            cell.imageView?.image = UIImage(named: "sonia")
+            
+        }
+        
+        else if name == "Sam Assaf" {
+            
+            cell.imageView?.image = UIImage(named: "sam")
+            
+        }
+        
+        else {
+            
+            cell.imageView?.image = UIImage(named: "ic_account_circle")
+            
+        }
+        
+        
+        cell.textLabel?.font = UIFont(name:"Avenir", size:30)
+        return cell
+    }
 
   // UITextViewDelegate protocol methods
   func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -166,11 +224,16 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
     picker.dismiss(animated: true, completion:nil)
   }
 
-  @IBAction func signOut(_ sender: UIButton) {
-    AppState.sharedInstance.signedIn = false
-    dismiss(animated: true, completion: nil)
-  }
-
+    @IBAction func signOut(_ sender: UIButton) {
+        let firebaseAuth = FIRAuth.auth()
+        do {
+            try firebaseAuth?.signOut()
+            AppState.sharedInstance.signedIn = false
+            dismiss(animated: true, completion: nil)
+        } catch let signOutError as NSError {
+            print ("Error signing out: \(signOutError.localizedDescription)")
+        }
+    }
   func showAlert(withTitle title:String, message:String) {
     DispatchQueue.main.async {
         let alert = UIAlertController(title: title,
@@ -180,5 +243,6 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
         self.present(alert, animated: true, completion: nil)
     }
   }
+
 
 }
