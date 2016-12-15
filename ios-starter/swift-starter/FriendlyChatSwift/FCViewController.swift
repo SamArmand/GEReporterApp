@@ -93,7 +93,7 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
   }
 
   @IBAction func didSendMessage(_ sender: UIButton) {
-    textFieldShouldReturn(textField)
+    _ = textFieldShouldReturn(textField)
   }
 
   @IBAction func didPressCrash(_ sender: AnyObject) {
@@ -209,14 +209,14 @@ class FCViewController: UIViewController, UITableViewDataSource, UITableViewDele
       let assets = PHAsset.fetchAssets(withALAssetURLs: [referenceURL as! URL], options: nil)
       let asset = assets.firstObject
       asset?.requestContentEditingInput(with: nil, completionHandler: { (contentEditingInput, info) in
-        let imageFile = contentEditingInput?.fullSizeImageURL
-        let filePath = "\(uid)/\(Int(Date.timeIntervalSinceReferenceDate * 1000))/\((referenceURL as AnyObject).lastPathComponent!)"
+        _ = contentEditingInput?.fullSizeImageURL
+        _ = "\(uid)/\(Int(Date.timeIntervalSinceReferenceDate * 1000))/\((referenceURL as AnyObject).lastPathComponent!)"
       })
     } else {
       guard let image = info[UIImagePickerControllerOriginalImage] as! UIImage? else { return }
-      let imageData = UIImageJPEGRepresentation(image, 0.8)
+      _ = UIImageJPEGRepresentation(image, 0.8)
       guard let uid = FIRAuth.auth()?.currentUser?.uid else { return }
-      let imagePath = "\(uid)/\(Int(Date.timeIntervalSinceReferenceDate * 1000)).jpg"
+      _ = "\(uid)/\(Int(Date.timeIntervalSinceReferenceDate * 1000)).jpg"
     }
   }
 
